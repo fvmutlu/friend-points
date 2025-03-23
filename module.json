@@ -1,0 +1,18 @@
+{
+    "id": "friend-points",
+    "title": "Friend Points",
+    "description": "A simple module to allow players to use Hero Points on allies' rolls.",
+    "authors": [
+        {
+            "name": "TNJedx"
+        }
+    ],
+    "version": "0.0.1",
+    "compatibility": {
+        "minimum": "10",
+        "verified": "11"
+    },
+    "esmodules": [
+        "scripts/main.js"
+    ]
+}
