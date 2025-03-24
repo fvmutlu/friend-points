@@ -5,10 +5,14 @@ export function addIconToSheet(app, html, data) {
     if (data.owner) {
         console.log("friend-points: The current user is an owner of the actor.");
         // TODO: Style this element
-        const button = $(`<a title="myButton"><i class="fas fa-users"></i> MYBUTTON</a>`);
-        // TODO: Find correct place to place the element
-        let titleEl = html.closest(".app").find(".window-title");
-        // TODO: Add function for button clicks here
-        if (!app.minimized) button.insertAfter(titleEl);
+        const label = $(`<span class="label">Friend Points</span>`);
+        // TODO: Model this after the Hero Points section
+        const button = $(`<i class="fas fa-users"></i>`);
+        let titleEl = html.closest(".app").find(".char-details .dots");
+        // TODO: Add function for button clicks
+        if (!app.minimized) {
+            titleEl.append(label);
+            titleEl.append(button);
+        }
     }
 }
