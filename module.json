@@ -10,9 +10,12 @@
     "version": "0.0.1",
     "compatibility": {
         "minimum": "10",
-        "verified": "11"
+        "verified": "12"
     },
-    "esmodules": [
-        "scripts/main.js"
+    "scripts": [
+        "scripts/friend-points.js"
+    ],
+    "styles": [
+        "styles/friend-points.css"
     ]
 }
