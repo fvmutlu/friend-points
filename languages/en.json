@@ -1,0 +1,14 @@
+{
+    "FRIEND-POINTS": {
+        "settings": {
+            "enable-friend-points": {
+                "label": "Enable Friend Points",
+                "description": "Enable or disable the Friend Points feature."
+            },
+            "enable-debug-logs": {
+                "label": "Enable Debug Logs",
+                "description": "Enable or disable debug logs related to the Friend Points module that can be viewed from the developer console (F12)."
+            }
+        }
+    }
+}

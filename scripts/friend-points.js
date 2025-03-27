@@ -9,14 +9,27 @@ class FriendPoints {
         FRIEND_POINTS: `modules/${this.ID}/templates/friend-points.hbs`
     }
 
-    /**
-     * A small helper function which leverages developer mode flags to gate debug logs.
-     * 
-     * @param {boolean} force - forces the log even if the debug flag is not on
-     * @param  {...any} args - what to log
-     */
+    static async init() {
+        game.settings.register(this.ID, "enable", {
+            name: game.i18n.localize("FRIEND-POINTS.settings.enable-friend-points.label"),
+            hint: game.i18n.localize("FRIEND-POINTS.settings.enable-friend-points.hint"),
+            scope: "world",
+            config: true,
+            default: true,
+            type: Boolean
+        });
+        game.settings.register(this.ID, "enable-debug-logs", {
+            name: game.i18n.localize("FRIEND-POINTS.settings.enable-debug-logs.label"),
+            hint: game.i18n.localize("FRIEND-POINTS.settings.enable-debug-logs.hint"),
+            scope: "client",
+            config: true,
+            default: false,
+            type: Boolean
+        });
+    }
+
     static log(force = false, ...args) {
-        const shouldLog = force || game.modules.get('_dev-mode')?.api?.getPackageDebugValue(this.ID);
+        const shouldLog = force || game.settings.get(this.ID, "enable-debug-logs");
 
         if (shouldLog) {
             console.log(this.ID, '|', ...args);
@@ -24,18 +37,11 @@ class FriendPoints {
     }
 }
 
-/**
- * Register our module's debug flag with developer mode's custom hook
- */
-Hooks.once('devModeReady', ({ registerPackageDebugFlag }) => {
-    registerPackageDebugFlag(FriendPoints.ID);
-});
-
 class FriendPointsResource {
     static addResource(actor) {
         if (!actor.getFlag(FriendPoints.ID, FriendPoints.RESOURCE_NAME)) {
             actor.setFlag(FriendPoints.ID, FriendPoints.RESOURCE_NAME, { "value": 0, "max": 3 });
-            FriendPoints.log(true, `Updated actor ${actor.name} with custom resource.`);
+            FriendPoints.log(false, `Updated actor ${actor.name} with custom resource.`);
         }
     }
 
@@ -48,24 +54,24 @@ class FriendPointsResource {
     }
 
     static renderResource(app, html, data) {
-        FriendPoints.log(true, "Rendering resource");
+        FriendPoints.log(false, "Rendering resource");
 
         if (!data.actor) {
-            FriendPoints.log(true, "No actor found in data.");
+            FriendPoints.log(false, "No actor found in data.");
             return;
         }
         if (!data.owner) {
-            FriendPoints.log(true, "User is not the owner of the actor.");
+            FriendPoints.log(false, "User is not the owner of the actor.");
             return;
         }
 
         let resource = this.getResource(data.actor);
         if (!resource) {
-            FriendPoints.log(true, "No resource found for actor:", data.actor);
+            FriendPoints.log(false, "No resource found for actor:", data.actor);
             return;
         }
 
-        FriendPoints.log(true, "Resource found:", resource);
+        FriendPoints.log(false, "Resource found:", resource);
 
         let titleEl = html.closest(".app").find(".char-details .dots");
         const label = $(`<span class="label">${FriendPoints.LABEL_STRING}</span>`);
@@ -73,16 +79,16 @@ class FriendPointsResource {
         let rendered = renderTemplate(FriendPoints.TEMPLATES.FRIEND_POINTS, { value: resource.value });
 
         if (!app.minimized) {
-            FriendPoints.log(true, "App is not minimized. Adding label and rendered template.");
+            FriendPoints.log(false, "App is not minimized. Adding label and rendered template.");
             titleEl.append(label);
             titleEl.append(rendered);
         } else {
-            FriendPoints.log(true, "App is minimized. Skipping rendering.");
+            FriendPoints.log(false, "App is minimized. Skipping rendering.");
         }
     }
 
     static getResource(actor) {
-        FriendPoints.log(true, "Getting resource for actor:", actor);
+        FriendPoints.log(false, "Getting resource for actor:", actor);
         return actor.flags[FriendPoints.ID]?.[FriendPoints.RESOURCE_NAME];
     }
 
@@ -113,6 +119,7 @@ class FriendPointsResource {
 }
 
 Hooks.once('ready', () => {
+    FriendPoints.init();
     FriendPointsResource.addResourceToAllActors();
 });
 
