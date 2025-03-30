@@ -3,12 +3,18 @@
         "settings": {
             "enable-friend-points": {
                 "label": "Enable Friend Points",
-                "description": "Enable or disable the Friend Points feature."
+                "description": "Enable / disable the Friend Points feature."
             },
             "enable-debug-logs": {
                 "label": "Enable Debug Logs",
-                "description": "Enable or disable debug logs related to the Friend Points module that can be viewed from the developer console (F12)."
+                "description": "Enable / disable debug logs that can be viewed from the developer console (F12)."
             }
+        },
+        "log-messages": {
+            "actor-not-found": "Sheet data does not contain actor.",
+            "user-not-owner": "User is not the owner of the actor.",
+            "actor-not-character": "Actor associated with sheet is not a character.",
+            "resource-not-found": "Friend Points resource not found in character data."
         }
     }
 }

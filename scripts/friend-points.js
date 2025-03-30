@@ -12,7 +12,7 @@ class FriendPoints {
     static async init() {
         game.settings.register(this.ID, "enable", {
             name: game.i18n.localize("FRIEND-POINTS.settings.enable-friend-points.label"),
-            hint: game.i18n.localize("FRIEND-POINTS.settings.enable-friend-points.hint"),
+            hint: game.i18n.localize("FRIEND-POINTS.settings.enable-friend-points.description"),
             scope: "world",
             config: true,
             default: true,
@@ -20,7 +20,7 @@ class FriendPoints {
         });
         game.settings.register(this.ID, "enable-debug-logs", {
             name: game.i18n.localize("FRIEND-POINTS.settings.enable-debug-logs.label"),
-            hint: game.i18n.localize("FRIEND-POINTS.settings.enable-debug-logs.hint"),
+            hint: game.i18n.localize("FRIEND-POINTS.settings.enable-debug-logs.description"),
             scope: "client",
             config: true,
             default: false,
@@ -40,8 +40,12 @@ class FriendPoints {
     static throwUIError(...args) {
         const errorMessage = `${this.ID} | ${args.join(' ')}`;
         ui.notifications.error(errorMessage);
-        // TODO: Add verbose logging to console
     };
+
+    static alwaysLoggedError(...args) {
+        this.log(true, ...args);
+        this.throwUIError(...args);
+    }
 
     static addResource(actor) {
         if (!actor.getFlag(FriendPoints.ID, FriendPoints.RESOURCE_NAME)) {
@@ -63,28 +67,26 @@ class FriendPoints {
         return actor.flags[FriendPoints.ID]?.[FriendPoints.RESOURCE_NAME];
     }
 
-    static async renderResource(app, html, data) {
+    static async renderFriendPointsResource(app, html, data) {
         this.log(false, "Trying to render Friend Points resource on actor sheet.");
-
         if (!data.actor) {
-            this.log(false, "No actor found in data.");
+            this.alwaysLoggedError("FRIEND-POINTS.log-messages.actor-not-found");
             return;
         }
         if (!data.owner) {
-            this.log(false, "User is not the owner of the actor.");
+            this.alwaysLoggedError("FRIEND-POINTS.log-messages.user-not-owner");
             return;
         }
-        if (!data.actor.type !== "character") {
-            this.log(false, "Actor is not a character.");
+        if (data.actor.type != "character") {
+            this.alwaysLoggedError("FRIEND-POINTS.log-messages.actor-not-character");
+            return;
         }
 
         let resource = this.getFriendPointsResource(data.actor);
         if (!resource) {
-            this.log(false, "No resource found for actor:", data.actor);
-            this.throwUIError("No resource found for actor:", data.actor.name);
+            this.alwaysLoggedError("FRIEND-POINTS.log-messages.resource-not-found", data.actor.name);
             return;
         }
-
         this.log(false, "Resource found:", resource);
 
         let titleEl = html.find(".char-details .dots");
@@ -93,9 +95,7 @@ class FriendPoints {
         const context = {
             filledCircles: [resource.value >= 1, resource.value >= 2, resource.value >= 3],
         }
-        console.log("Context:", context);
         const rendered = await renderTemplate(this.TEMPLATES.FRIEND_POINTS, context);
-        console.log("Rendered template:", rendered);
 
         if (!app.minimized) {
             this.log(false, "App is not minimized. Adding label and rendered template.");
@@ -103,7 +103,6 @@ class FriendPoints {
             titleEl.append(rendered);
             const resourcePipContainer = html[0].querySelector("#friend-points-pips");
             const resourcePips = Array.from(resourcePipContainer.querySelectorAll("i"));
-            console.log("Resource Pips:", resourcePips);
             for (const pip of resourcePips) {
                 pip.addEventListener("click", (event) => {
                     this.adjustFriendPointsResource(data.actor, 1);
@@ -142,4 +141,4 @@ Hooks.once('ready', () => {
 });
 
 // Data returned from the render hook is only data, the methods are not available
-Hooks.on("renderCharacterSheetPF2e", (app, html, data) => { FriendPoints.renderResource(app, html, data); });
+Hooks.on("renderCharacterSheetPF2e", (app, html, data) => { FriendPoints.renderFriendPointsResource(app, html, data); });
