@@ -1,20 +1,25 @@
 {
-    "FRIEND-POINTS": {
-        "settings": {
-            "enable-friend-points": {
-                "label": "Enable Friend Points",
-                "description": "Enable / disable the Friend Points feature."
-            },
-            "enable-debug-logs": {
-                "label": "Enable Debug Logs",
-                "description": "Enable / disable debug logs that can be viewed from the developer console (F12)."
-            }
-        },
-        "log-messages": {
-            "actor-not-found": "Sheet data does not contain actor.",
-            "user-not-owner": "User is not the owner of the actor.",
-            "actor-not-character": "Actor associated with sheet is not a character.",
-            "resource-not-found": "Friend Points resource not found in character data."
-        }
+  "FRIEND-POINTS": {
+    "settings": {
+      "enable-friend-points": {
+        "label": "Enable Friend Points",
+        "description": "Enable / disable the Friend Points feature."
+      },
+      "enable-debug-logs": {
+        "label": "Enable Debug Logs",
+        "description": "Enable / disable debug logs that can be viewed from the developer console (F12)."
+      }
+    },
+    "log-messages": {
+      "module-initialized": "Friend Points module initialized.",
+      "resource-added": "Updated actor {actorName} with custom resource.",
+      "actor-not-found": "Sheet data does not contain actor.",
+      "user-not-owner": "User is not the owner of the actor.",
+      "actor-not-character": "Actor {actorName} associated with sheet is not a character.",
+      "resource-not-found": "Friend Points resource not found in character data for actor {actorName}.",
+      "app-minimized": "App is minimized. Skipping adding Friend Points UI elements.",
+      "resource-update-failed": "Failed to update Friend Points resource for actor {actorName}: {errorMessage}.",
+      "resource-updated": "Friend Points for actor {actorName} updated. New value: {newValue}."
     }
+  }
 }

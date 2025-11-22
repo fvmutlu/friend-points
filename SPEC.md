@@ -1,0 +1,3 @@
+# PF2E Friend Points Module Spec
+
+**Summary:** Adds a new resource called Friend Points. These appear next to Hero Points on the character sheet and are tracked similarly. Players can right click on a roll card and choose the new option "Request Friend Point to reroll". This prompts a dialog box which displays a list of Player Character actors who currently have their owner Player user connected. If any such actor has Friend Points, their name will be clickable. Once the requesting user chooses an actor in this way, a message is communicated to the owning user of that actor. The user gets a dialog box pop-up on their end to grant or deny the request. If they grant, the reroll then proceeds the same way a reroll with a Hero Point does.
