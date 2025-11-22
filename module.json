@@ -1,28 +1,28 @@
 {
-    "id": "friend-points",
-    "title": "Friend Points",
-    "description": "A simple module to allow players to use Hero Points on allies' rolls.",
-    "languages": [
-        {
-          "lang": "en",
-          "name": "English",
-          "path": "languages/en.json"
-        }
-      ],
-    "authors": [
-        {
-            "name": "TNJedx"
-        }
-    ],
-    "version": "0.0.1",
-    "compatibility": {
-        "minimum": "10",
-        "verified": "12"
-    },
-    "scripts": [
-        "scripts/friend-points.js"
-    ],
-    "styles": [
-        "styles/friend-points.css"
-    ]
+  "id": "friend-points",
+  "title": "Friend Points",
+  "description": "A simple module to allow players to use Hero Points on allies' rolls.",
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "languages/en.json"
+    }
+  ],
+  "authors": [
+    {
+      "name": "TNJedx"
+    }
+  ],
+  "version": "1.0.0",
+  "url": "https://github.com/fvmutlu/friend-points",
+  "readme": "https://github.com/fvmutlu/friend-points/blob/main/README.md",
+  "manifest": "https://github.com/fvmutlu/friend-points/blob/main/module.json",
+  "download": "https://github.com/fvmutlu/friend-points/releases/download/1.0.0/module.zip",
+  "compatibility": {
+    "minimum": "10",
+    "verified": "13"
+  },
+  "scripts": ["scripts/friend-points.js"],
+  "styles": ["styles/friend-points.css"]
 }
