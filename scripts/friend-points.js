@@ -29,18 +29,7 @@ class FriendPoints {
   }
 
   static init() {
-    game.settings.register(this.ID, "enable", {
-      name: game.i18n.format(
-        "FRIEND-POINTS.settings.enable-friend-points.label"
-      ),
-      hint: game.i18n.format(
-        "FRIEND-POINTS.settings.enable-friend-points.description"
-      ),
-      scope: "world",
-      config: true,
-      default: true,
-      type: Boolean,
-    });
+    // Add setting for verbose logging.
     game.settings.register(this.ID, "enable-debug-logs", {
       name: game.i18n.format("FRIEND-POINTS.settings.enable-debug-logs.label"),
       hint: game.i18n.format(
@@ -51,19 +40,41 @@ class FriendPoints {
       default: false,
       type: Boolean,
     });
+
+    // Add friend points resource to all existing character actors.
     this.addResourceToAllActors();
+
     this.log(false, "FRIEND-POINTS.log-messages.module-initialized");
   }
 
-  static addResource(actor) {
-    if (!actor.getFlag(this.ID, this.RESOURCE_NAME)) {
-      actor.setFlag(this.ID, this.RESOURCE_NAME, {
-        value: 0,
-        max: 3,
+  static async addResource(actor) {
+    // Guard clauses
+    if (actor.type !== "character") {
+      this.log(false, "FRIEND-POINTS.log-messages.actor-not-character");
+      return;
+    }
+    if (actor.getFlag(this.ID, this.RESOURCE_NAME)) {
+      this.log(false, "FRIEND-POINTS.log-messages.resource-already-exists", {
+        actorName: actor.name,
       });
+      return;
+    }
+
+    const newFlag = { value: 0, max: 3 };
+    try {
+      const added = await actor.setFlag(this.ID, this.RESOURCE_NAME, newFlag);
       this.log(false, "FRIEND-POINTS.log-messages.resource-added", {
         actorName: actor.name,
       });
+    } catch (error) {
+      this.alwaysLoggedError(
+        "FRIEND-POINTS.log-messages.resource-update-failed",
+        {
+          actorName: actor.name,
+          errorMessage: error.message,
+        }
+      );
+      return;
     }
   }
 
@@ -96,12 +107,15 @@ class FriendPoints {
       return;
     }
 
-    let resource = this.getFriendPointsResource(data.actor);
+    const actor = game.actors.get(data.actor._id);
+
+    let resource = this.getFriendPointsResource(actor);
     if (!resource) {
-      this.alwaysLoggedError("FRIEND-POINTS.log-messages.resource-not-found", {
-        actorName: data.actor.name,
+      this.log(false, "FRIEND-POINTS.log-messages.resource-not-found", {
+        actorName: actor.name,
       });
-      return;
+      this.addResource(actor);
+      resource = this.getFriendPointsResource(actor);
     }
 
     let titleEl = html.find(".char-details .dots");
@@ -130,10 +144,10 @@ class FriendPoints {
       );
       for (const pip of resourcePips) {
         pip.addEventListener("click", async (event) => {
-          this.adjustFriendPointsResource(data.actor, 1);
+          this.adjustFriendPointsResource(actor, 1);
         });
         pip.addEventListener("contextmenu", async (event) => {
-          this.adjustFriendPointsResource(data.actor, -1);
+          this.adjustFriendPointsResource(actor, -1);
         });
       }
     } else {
@@ -145,18 +159,16 @@ class FriendPoints {
     let resource = this.getFriendPointsResource(actor);
     if (!resource) {
       this.alwaysLoggedError("FRIEND-POINTS.log-messages.resource-not-found", {
-        actorName: data.actor.name,
+        actorName: actor.name,
       });
       return;
     }
 
     const newValue = Math.clamp(resource.value + change, 0, resource.max);
-    const newflags = foundry.utils.deepClone(actor.flags);
-    newflags[this.ID][this.RESOURCE_NAME].value = newValue;
-    const updates = [{ _id: actor._id, flags: newflags }];
+    const newFlag = { value: newValue, max: resource.max };
 
     try {
-      const updated = await Actor.implementation.updateDocuments(updates);
+      const updated = await actor.setFlag(this.ID, this.RESOURCE_NAME, newFlag);
       this.log(false, "FRIEND-POINTS.log-messages.resource-updated", {
         actorName: actor.name,
         newValue: newValue,

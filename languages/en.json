@@ -18,6 +18,7 @@
       "actor-not-character": "Actor {actorName} associated with sheet is not a character.",
       "resource-not-found": "Friend Points resource not found in character data for actor {actorName}.",
       "app-minimized": "App is minimized. Skipping adding Friend Points UI elements.",
+      "resource-already-exists": "Actor {actorName} already has Friend Points resource. Skipping addition.",
       "resource-update-failed": "Failed to update Friend Points resource for actor {actorName}: {errorMessage}.",
       "resource-updated": "Friend Points for actor {actorName} updated. New value: {newValue}."
     }
