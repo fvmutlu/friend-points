@@ -24,5 +24,15 @@
     "verified": "13"
   },
   "scripts": ["scripts/friend-points.js"],
-  "styles": ["styles/friend-points.css"]
+  "styles": ["styles/friend-points.css"],
+  "relationships": {
+    "requires": [
+      {
+        "id": "socketlib",
+        "type": "module",
+        "manifest": "https://github.com/farling42/foundryvtt-socketlib/releases/latest/download/module.json"
+      }
+    ]
+  },
+  "socket": true
 }

@@ -41,9 +41,6 @@ class FriendPoints {
       type: Boolean,
     });
 
-    // Add friend points resource to all existing character actors.
-    this.addResourceToAllActors();
-
     this.log(false, "FRIEND-POINTS.log-messages.module-initialized");
   }
 
@@ -184,13 +181,80 @@ class FriendPoints {
       return;
     }
   }
+
+  static async promptForFriendPoint(promptText) {
+    return new Promise((resolve) => {
+      new Dialog({
+        title: "Remote Query",
+        content: `<p><strong>${promptText}</strong></p>
+                     <p>You were prompted by ${game.user.name}</p>`,
+        buttons: {
+          // Key 'accept' is the return value
+          accept: {
+            icon: '<i class="fas fa-check"></i>',
+            label: "Accept",
+            callback: () => resolve("accepted"),
+          },
+          // Key 'decline' is the return value
+          decline: {
+            icon: '<i class="fas fa-times"></i>',
+            label: "Decline",
+            callback: () => resolve("declined"),
+          },
+        },
+        default: "accept",
+        // Resolve with null if the dialog is closed without clicking a button
+        close: () => resolve(null),
+      }).render(true);
+    });
+  }
+
+  static async queryFriendPointFromUser(socket) {
+    const targetUser = game.users.getName("Player2");
+    const result = await socket.executeAsUser(
+      "FriendPoints.promptForFriendPoint",
+      targetUser.id,
+      "Would you like to give a Friend Point?"
+    );
+    console.log(`User responded with: ${result}`);
+  }
 }
 
-Hooks.once("ready", () => {
+Hooks.once("init", () => {
   FriendPoints.init();
 });
 
 // Data returned from the render hook is only data, the methods are not available
 Hooks.on("renderCharacterSheetPF2e", (app, html, data) => {
   FriendPoints.renderFriendPointsResource(app, html, data);
+});
+
+// A static variable to hold our socket
+let moduleSocket;
+
+/**
+ * Hook to register our socket when socketlib is ready.
+ */
+Hooks.once("socketlib.ready", () => {
+  // 1. Register a unique system name (use your module's ID)
+  moduleSocket = socketlib.registerModule(FriendPoints.ID);
+
+  // 2. Register the function that will open the dialog on the target client
+  moduleSocket.register(
+    "FriendPoints.promptForFriendPoint",
+    FriendPoints.promptForFriendPoint
+  );
+
+  console.log(
+    "Your Module: Socket and promptForFriendPoint function registered."
+  );
+});
+
+Hooks.on("getChatLogEntryContext", (html, options) => {
+  options.push({
+    name: "Prompt for Friend Point",
+    icon: "<i class='fas fa-users'></i>", // Proper FontAwesome icon syntax
+    condition: (li) => true, // Always show the option
+    callback: (li) => FriendPoints.queryFriendPointFromUser(moduleSocket),
+  });
 });
