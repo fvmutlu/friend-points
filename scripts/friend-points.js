@@ -209,14 +209,57 @@ class FriendPoints {
     });
   }
 
-  static async queryFriendPointFromUser(socket) {
+  static async queryFriendPointFromUser(socket, message) {
     const targetUser = game.users.getName("Player2");
     const result = await socket.executeAsUser(
       "FriendPoints.promptForFriendPoint",
       targetUser.id,
       "Would you like to give a Friend Point?"
     );
-    console.log(`User responded with: ${result}`);
+    this.log(false, `User responded with: ${result}`);
+    if (result === "accepted") {
+      this.handleFriendPointReroll(message);
+    }
+  }
+
+  static async handleFriendPointReroll(originalMessage) {
+    // Guard clauses
+    if (!originalMessage.rolls?.length) {
+      this.alwaysLoggedError("No Roll data found to reroll.");
+      return;
+    }
+
+    const roll = originalMessage.rolls[0];
+    //const diceTerms = roll.terms.filter((t) => t instanceof DiceTerm);
+    const diceTerms = roll.dice;
+    if (diceTerms.length === 0) {
+      this.alwaysLoggedError("No DiceTerm found in the original roll.");
+      return;
+    }
+    const diceTerm = diceTerms[0];
+
+    if (!diceTerm.results || diceTerm.results.length === 0) {
+      this.alwaysLoggedError("No results found in the DiceTerm.");
+      return;
+    }
+    const results = diceTerm.results;
+
+    if (results.length > 1) {
+      this.alwaysLoggedError(
+        "Multiple dice results found; only single-die rolls are supported."
+      );
+      return;
+    }
+    const originalResult = results[0];
+
+    if (originalResult.discarded) {
+      this.alwaysLoggedError("Original die was discarded; cannot reroll.");
+      return;
+    }
+
+    this.log(false, "Original dice roll: {diceRoll}.", {
+      diceRoll: originalResult.result,
+    });
   }
 }
 
@@ -254,7 +297,18 @@ Hooks.on("getChatLogEntryContext", (html, options) => {
   options.push({
     name: "Prompt for Friend Point",
     icon: "<i class='fas fa-users'></i>", // Proper FontAwesome icon syntax
-    condition: (li) => true, // Always show the option
-    callback: (li) => FriendPoints.queryFriendPointFromUser(moduleSocket),
+    condition: (li) => {
+      // Condition to only show this option on a Roll ChatMessage
+      const message = game.messages.get(li.data("messageId"));
+      // Only show if the message has an associated Roll (check the system for the exact data path)
+      return message?.rolls?.length > 0;
+    }, // Always show the option
+    callback: (li) => {
+      const messageId = li.data("messageId");
+      const message = game.messages.get(messageId);
+
+      // This is where the core logic goes
+      FriendPoints.queryFriendPointFromUser(moduleSocket, message);
+    },
   });
 });
