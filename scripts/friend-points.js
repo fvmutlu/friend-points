@@ -4,6 +4,7 @@ class FriendPoints {
   static RESOURCE_NAME = "friend-points";
   static TEMPLATES = {
     FRIEND_POINTS: `modules/${this.ID}/templates/friend-points.hbs`,
+    REROLL_WRAPPER: `modules/${this.ID}/templates/reroll-wrapper.hbs`,
   };
 
   // Constants
@@ -223,15 +224,13 @@ class FriendPoints {
   }
 
   static async handleFriendPointReroll(originalMessage) {
-    // Guard clauses
     if (!originalMessage.rolls?.length) {
       this.alwaysLoggedError("No Roll data found to reroll.");
       return;
     }
 
-    const roll = originalMessage.rolls[0];
-    //const diceTerms = roll.terms.filter((t) => t instanceof DiceTerm);
-    const diceTerms = roll.dice;
+    const originalRoll = originalMessage.rolls[0];
+    const diceTerms = originalRoll.dice;
     if (diceTerms.length === 0) {
       this.alwaysLoggedError("No DiceTerm found in the original roll.");
       return;
@@ -257,9 +256,31 @@ class FriendPoints {
       return;
     }
 
-    this.log(false, "Original dice roll: {diceRoll}.", {
-      diceRoll: originalResult.result,
-    });
+    const newRoll = await originalRoll.reroll();
+
+    const discardedRollHtml = await originalRoll.render();
+    const newRollHtml = await newRoll.render();
+
+    // Prepare data for the wrapper template
+    const wrapperData = {
+      discardedRollHtml: discardedRollHtml,
+      newRollHtml: newRollHtml,
+    };
+
+    const newContent = await renderTemplate(
+      this.TEMPLATES.REROLL_WRAPPER,
+      wrapperData
+    );
+
+    // Delete the original message (to achieve the replacement effect)
+    const newMessageData = {
+      rolls: [newRoll.toJSON()],
+      flavor: `(Rerolled with Friend Point) ${originalMessage.flavor}`,
+      content: newContent,
+    };
+    const newMessage = originalMessage.clone(newMessageData);
+    await ChatMessage.create(newMessage);
+    await originalMessage.delete();
   }
 }
 
