@@ -88,6 +88,16 @@ class FriendPoints {
     return actor.flags[this.ID]?.[this.RESOURCE_NAME];
   }
 
+  static getPlayerActorsWithFriendPoints() {
+    return game.actors.filter((actor) => {
+      if (!actor) return false;
+      if (actor.type !== "character") return false;
+      if (!actor.hasPlayerOwner) return false;
+      const resource = this.getFriendPointsResource(actor);
+      return resource && resource.value > 0;
+    });
+  }
+
   static async renderFriendPointsResource(app, html, data) {
     // Guard clauses
     if (!data.actor) {
@@ -183,20 +193,17 @@ class FriendPoints {
     }
   }
 
-  static async promptForFriendPoint(promptText) {
+  static async promptForFriendPoint(actor, promptingPlayerName) {
     return new Promise((resolve) => {
       new Dialog({
-        title: "Remote Query",
-        content: `<p><strong>${promptText}</strong></p>
-                     <p>You were prompted by ${game.user.name}</p>`,
+        title: "Friend Point Request",
+        content: `<p>Would you like to give one of ${actor.name}'s Friend Points to ${promptingPlayerName}?</p>`,
         buttons: {
-          // Key 'accept' is the return value
           accept: {
             icon: '<i class="fas fa-check"></i>',
             label: "Accept",
             callback: () => resolve("accepted"),
           },
-          // Key 'decline' is the return value
           decline: {
             icon: '<i class="fas fa-times"></i>',
             label: "Decline",
@@ -210,12 +217,80 @@ class FriendPoints {
     });
   }
 
+  static async promptForFriendPointRequestTarget() {
+    const pcsWithFriendPoints = this.getPlayerActorsWithFriendPoints();
+    const activePlayers = game.users.players.filter(
+      (user) => user.active && user.id !== game.user.id
+    );
+
+    const validPcs = pcsWithFriendPoints.filter((pc) => {
+      const owners = activePlayers.filter(
+        (player) => pc.getUserLevel(player) >= 3
+      );
+      return owners.length === 1;
+    });
+
+    if (validPcs.length === 0) {
+      await foundry.applications.api.DialogV2.wait({
+        window: { title: "Friend Point Request" },
+        content:
+          "No player characters with a single active owner have Friend Points available to give. Press OK to continue.",
+        buttons: [
+          {
+            action: "ok",
+            label: "OK",
+            icon: "fas fa-check",
+          },
+        ],
+        rejectClose: false,
+        modal: true,
+      });
+      return;
+    }
+
+    const pcToOwnerMap = validPcs.reduce((acc, actor) => {
+      const owner = activePlayers.find(
+        (player) => actor.getUserLevel(player) >= 3
+      );
+      acc[actor.id] = owner;
+      return acc;
+    }, {});
+
+    const pcChoices = [];
+    validPcs.forEach((actor) => {
+      pcChoices.push({
+        action: actor.id,
+        label: actor.name,
+        icon: "fas fa-user",
+        callback: () => ({ pc: actor, owner: pcToOwnerMap[actor.id] }),
+      });
+    });
+
+    const result = await foundry.applications.api.DialogV2.wait({
+      title: "Friend Point Request",
+      content: "Select a player to request a Friend Point from:",
+      buttons: pcChoices,
+      rejectClose: false,
+      modal: true,
+    });
+    return result;
+  }
+
   static async queryFriendPointFromUser(socket, message) {
-    const targetUser = game.users.getName("Player2");
+    const pcAndOwner = await this.promptForFriendPointRequestTarget();
+    console.log(pcAndOwner);
+    if (!pcAndOwner) {
+      this.log(
+        false,
+        "No valid targets were found or user cancelled Friend Point request target selection."
+      );
+      return;
+    }
+
     const result = await socket.executeAsUser(
       "FriendPoints.promptForFriendPoint",
-      targetUser.id,
-      "Would you like to give a Friend Point?"
+      pcAndOwner.owner.id,
+      [pcAndOwner.pc, game.user.name]
     );
     this.log(false, `User responded with: ${result}`);
     if (result === "accepted") {
@@ -316,8 +391,8 @@ Hooks.once("socketlib.ready", () => {
 
 Hooks.on("getChatLogEntryContext", (html, options) => {
   options.push({
-    name: "Prompt for Friend Point",
-    icon: "<i class='fas fa-users'></i>", // Proper FontAwesome icon syntax
+    name: "Request Friend Point for Reroll",
+    icon: "<i class='fas fa-users'></i>",
     condition: (li) => {
       // Condition to only show this option on a Roll ChatMessage
       const message = game.messages.get(li.data("messageId"));
