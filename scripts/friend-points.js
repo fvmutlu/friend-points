@@ -194,7 +194,34 @@ class FriendPoints {
   }
 
   static async promptForFriendPoint(actor, promptingPlayerName) {
-    return new Promise((resolve) => {
+    const acceptOrDecline = [
+      {
+        action: "accept",
+        label: "Accept",
+        icon: "fas fa-check",
+        callback: () => true,
+      },
+      {
+        action: "decline",
+        label: "Decline",
+        icon: "fas fa-times",
+        callback: () => false,
+      },
+    ];
+    const result = await foundry.applications.api.DialogV2.wait({
+      title: "Friend Point Request",
+      content: `<p>Would you like to give one of ${actor.name}'s Friend Points to ${promptingPlayerName}?</p>`,
+      buttons: acceptOrDecline,
+      rejectClose: false,
+      modal: true,
+    });
+    if (result) {
+      FriendPoints.adjustFriendPointsResource(game.actors.get(actor._id), -1);
+    }
+
+    return result;
+
+    /* return new Promise((resolve) => {
       new Dialog({
         title: "Friend Point Request",
         content: `<p>Would you like to give one of ${actor.name}'s Friend Points to ${promptingPlayerName}?</p>`,
@@ -214,7 +241,7 @@ class FriendPoints {
         // Resolve with null if the dialog is closed without clicking a button
         close: () => resolve(null),
       }).render(true);
-    });
+    }); */
   }
 
   static async promptForFriendPointRequestTarget() {
@@ -290,10 +317,11 @@ class FriendPoints {
     const result = await socket.executeAsUser(
       "FriendPoints.promptForFriendPoint",
       pcAndOwner.owner.id,
-      [pcAndOwner.pc, game.user.name]
+      pcAndOwner.pc,
+      game.actors.get(message.speaker.actor).name
     );
     this.log(false, `User responded with: ${result}`);
-    if (result === "accepted") {
+    if (result) {
       this.handleFriendPointReroll(message);
     }
   }
