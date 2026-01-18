@@ -417,18 +417,18 @@ Hooks.once("socketlib.ready", () => {
   );
 });
 
-Hooks.on("getChatLogEntryContext", (html, options) => {
-  options.push({
+Hooks.on("getChatMessageContextOptions", (application, menuItems) => {
+  menuItems.push({
     name: "Request Friend Point for Reroll",
     icon: "<i class='fas fa-users'></i>",
     condition: (li) => {
       // Condition to only show this option on a Roll ChatMessage
-      const message = game.messages.get(li.data("messageId"));
+      const message = game.messages.get(li.dataset.messageId);
       // Only show if the message has an associated Roll (check the system for the exact data path)
       return message?.rolls?.length > 0;
     }, // Always show the option
     callback: (li) => {
-      const messageId = li.data("messageId");
+      const messageId = li.dataset.messageId;
       const message = game.messages.get(messageId);
 
       // This is where the core logic goes
