@@ -20,7 +20,7 @@ class FriendPoints {
   static throwUIError(log_message_id, log_vars = {}) {
     const errorMessage = `${this.ID} | ${game.i18n.format(
       log_message_id,
-      log_vars
+      log_vars,
     )}`;
     ui.notifications.error(errorMessage);
   }
@@ -34,7 +34,7 @@ class FriendPoints {
     game.settings.register(this.ID, "enable-debug-logs", {
       name: game.i18n.format("FRIEND-POINTS.settings.enable-debug-logs.label"),
       hint: game.i18n.format(
-        "FRIEND-POINTS.settings.enable-debug-logs.description"
+        "FRIEND-POINTS.settings.enable-debug-logs.description",
       ),
       scope: "client",
       config: true,
@@ -42,7 +42,10 @@ class FriendPoints {
       type: Boolean,
     });
 
-    this.log(false, "FRIEND-POINTS.log-messages.module-initialized");
+    const TargetClass = window.this.log(
+      false,
+      "FRIEND-POINTS.log-messages.module-initialized",
+    );
   }
 
   static async addResource(actor) {
@@ -70,7 +73,7 @@ class FriendPoints {
         {
           actorName: actor.name,
           errorMessage: error.message,
-        }
+        },
       );
       return;
     }
@@ -128,7 +131,7 @@ class FriendPoints {
 
     let titleEl = html.find(".char-details .dots");
     const label = $(
-      `<span class="label" style="margin-left:10px;">${this.RESOURCE_LABEL}</span>`
+      `<span class="label" style="margin-left:10px;">${this.RESOURCE_LABEL}</span>`,
     );
 
     const context = {
@@ -140,7 +143,7 @@ class FriendPoints {
     };
     const rendered = await renderTemplate(
       this.TEMPLATES.FRIEND_POINTS,
-      context
+      context,
     );
 
     if (!app.minimized) {
@@ -148,7 +151,7 @@ class FriendPoints {
       titleEl.append(rendered);
       const resourcePipContainer = html[0].querySelector("#friend-points-pips");
       const resourcePips = Array.from(
-        resourcePipContainer.querySelectorAll("i")
+        resourcePipContainer.querySelectorAll("i"),
       );
       for (const pip of resourcePips) {
         pip.addEventListener("click", async (event) => {
@@ -187,7 +190,7 @@ class FriendPoints {
         {
           actorName: actor.name,
           errorMessage: error.message,
-        }
+        },
       );
       return;
     }
@@ -247,12 +250,12 @@ class FriendPoints {
   static async promptForFriendPointRequestTarget() {
     const pcsWithFriendPoints = this.getPlayerActorsWithFriendPoints();
     const activePlayers = game.users.players.filter(
-      (user) => user.active && user.id !== game.user.id
+      (user) => user.active && user.id !== game.user.id,
     );
 
     const validPcs = pcsWithFriendPoints.filter((pc) => {
       const owners = activePlayers.filter(
-        (player) => pc.getUserLevel(player) >= 3
+        (player) => pc.getUserLevel(player) >= 3,
       );
       return owners.length === 1;
     });
@@ -277,7 +280,7 @@ class FriendPoints {
 
     const pcToOwnerMap = validPcs.reduce((acc, actor) => {
       const owner = activePlayers.find(
-        (player) => actor.getUserLevel(player) >= 3
+        (player) => actor.getUserLevel(player) >= 3,
       );
       acc[actor.id] = owner;
       return acc;
@@ -309,7 +312,7 @@ class FriendPoints {
     if (!pcAndOwner) {
       this.log(
         false,
-        "No valid targets were found or user cancelled Friend Point request target selection."
+        "No valid targets were found or user cancelled Friend Point request target selection.",
       );
       return;
     }
@@ -318,7 +321,7 @@ class FriendPoints {
       "FriendPoints.promptForFriendPoint",
       pcAndOwner.owner.id,
       pcAndOwner.pc,
-      game.actors.get(message.speaker.actor).name
+      game.actors.get(message.speaker.actor).name,
     );
     this.log(false, `User responded with: ${result}`);
     if (result) {
@@ -348,7 +351,7 @@ class FriendPoints {
 
     if (results.length > 1) {
       this.alwaysLoggedError(
-        "Multiple dice results found; only single-die rolls are supported."
+        "Multiple dice results found; only single-die rolls are supported.",
       );
       return;
     }
@@ -372,7 +375,7 @@ class FriendPoints {
 
     const newContent = await renderTemplate(
       this.TEMPLATES.REROLL_WRAPPER,
-      wrapperData
+      wrapperData,
     );
 
     // Delete the original message (to achieve the replacement effect)
@@ -409,11 +412,11 @@ Hooks.once("socketlib.ready", () => {
   // 2. Register the function that will open the dialog on the target client
   moduleSocket.register(
     "FriendPoints.promptForFriendPoint",
-    FriendPoints.promptForFriendPoint
+    FriendPoints.promptForFriendPoint,
   );
 
   console.log(
-    "Your Module: Socket and promptForFriendPoint function registered."
+    "Your Module: Socket and promptForFriendPoint function registered.",
   );
 });
 
@@ -425,7 +428,10 @@ Hooks.on("getChatMessageContextOptions", (application, menuItems) => {
       // Condition to only show this option on a Roll ChatMessage
       const message = game.messages.get(li.dataset.messageId);
       // Only show if the message has an associated Roll (check the system for the exact data path)
-      return message?.rolls?.length > 0;
+      const isRollMessage = message?.rolls?.length > 0;
+      // Only show if the roll belongs to the current user
+      const isCorrectUser = message?.getUserLevel(game.user) >= 3;
+      return isRollMessage && isCorrectUser;
     }, // Always show the option
     callback: (li) => {
       const messageId = li.dataset.messageId;
