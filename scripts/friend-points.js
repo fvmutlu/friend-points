@@ -362,31 +362,12 @@ class FriendPoints {
       return;
     }
 
-    const newRoll = await originalRoll.reroll();
-
-    const discardedRollHtml = await originalRoll.render();
-    const newRollHtml = await newRoll.render();
-
-    // Prepare data for the wrapper template
-    const wrapperData = {
-      discardedRollHtml: discardedRollHtml,
-      newRollHtml: newRollHtml,
-    };
-
-    const newContent = await renderTemplate(
-      this.TEMPLATES.REROLL_WRAPPER,
-      wrapperData,
-    );
-
-    // Delete the original message (to achieve the replacement effect)
-    const newMessageData = {
-      rolls: [newRoll.toJSON()],
-      flavor: `(Rerolled with Friend Point) ${originalMessage.flavor}`,
-      content: newContent,
-    };
-    const newMessage = originalMessage.clone(newMessageData);
-    await ChatMessage.create(newMessage);
-    await originalMessage.delete();
+    Hooks.once("renderChatMessage", (message, html, data) => {
+      message.update({
+        flavor: `<i class="fas fa-users reroll-indicator" inert="" data-tooltip="Rerolled using a Friend Point" style="padding: 0 0.5em;"></i>${message.flavor}`,
+      });
+    });
+    await game.pf2e.Check.rerollFromMessage(originalMessage);
   }
 }
 
@@ -431,7 +412,8 @@ Hooks.on("getChatMessageContextOptions", (application, menuItems) => {
       const isRollMessage = message?.rolls?.length > 0;
       // Only show if the roll belongs to the current user
       const isCorrectUser = message?.getUserLevel(game.user) >= 3;
-      return isRollMessage && isCorrectUser;
+      const isRerollable = message?.isRerollable;
+      return isRollMessage && isCorrectUser && isRerollable;
     }, // Always show the option
     callback: (li) => {
       const messageId = li.dataset.messageId;
