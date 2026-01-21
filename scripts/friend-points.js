@@ -379,6 +379,13 @@ Hooks.once("socketlib.ready", () => {
   );
 });
 
+// TODO: Add a callback that:
+// 1) Hooks on renderChatMessageHTML conditionally based on whether pf2e-toolbelt is installed and targetHelper is enabled
+// 2) Checks whether the message has targetHelper target row
+// 3) If so, adds friend point reroll buttons to each target row
+// 4) Makes sure each button is only clickable by a user who owns the relevant actor, i.e. checks in the listener for the element that the click comes from a valid user
+// 5) When clicked, triggers the FriendPoints.queryFriendPointFromUser function with the relevant message
+
 Hooks.on("getChatMessageContextOptions", (application, menuItems) => {
   menuItems.push({
     name: "Request Friend Point for Reroll",
