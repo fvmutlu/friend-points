@@ -223,28 +223,6 @@ class FriendPoints {
     }
 
     return result;
-
-    /* return new Promise((resolve) => {
-      new Dialog({
-        title: "Friend Point Request",
-        content: `<p>Would you like to give one of ${actor.name}'s Friend Points to ${promptingPlayerName}?</p>`,
-        buttons: {
-          accept: {
-            icon: '<i class="fas fa-check"></i>',
-            label: "Accept",
-            callback: () => resolve("accepted"),
-          },
-          decline: {
-            icon: '<i class="fas fa-times"></i>',
-            label: "Decline",
-            callback: () => resolve("declined"),
-          },
-        },
-        default: "accept",
-        // Resolve with null if the dialog is closed without clicking a button
-        close: () => resolve(null),
-      }).render(true);
-    }); */
   }
 
   static async promptForFriendPointRequestTarget() {
@@ -362,7 +340,7 @@ class FriendPoints {
       return;
     }
 
-    Hooks.once("renderChatMessage", (message, html, data) => {
+    Hooks.once("renderChatMessageHTML", (message, html, context) => {
       message.update({
         flavor: `<i class="fas fa-users reroll-indicator" inert="" data-tooltip="Rerolled using a Friend Point" style="padding: 0 0.5em;"></i>${message.flavor}`,
       });
