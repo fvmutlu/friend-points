@@ -347,6 +347,32 @@ class FriendPoints {
     });
     await game.pf2e.Check.rerollFromMessage(originalMessage);
   }
+
+  // TODO: If pf2e-toolbelt is installed and targetHelper is enabled, add a callback that:
+  // 1) Hooks on pf2e-toolbelt.rollSave
+  // 2) Confirms the message does not have roll content and has targetHelper target row that matches the roll's actor
+  // 3) Adds a friend point reroll button to the target row making sure the button is only clickable by a user who owns the relevant actor,  i.e. checks in the listener for the element that the click comes from a valid user
+  // 4) When clicked, triggers the FriendPoints.queryFriendPointFromUser function with the relevant messages
+  static async handleFriendPointRerollWithToolbeltIntegration(
+    originalMessage,
+    html,
+  ) {
+    if (!originalMessage.flags["pf2e-toolbelt"]?.targetHelper?.targets) {
+      this.alwaysLoggedError("No targets found from pf2e-toolbelt flags.");
+      return;
+    }
+    const targets = originalMessage.flags["pf2e-toolbelt"].targetHelper.targets;
+    const targetElements = html.querySelectorAll(
+      `.message-content > div.pf2e-toolbelt-target-targetRows > div.target-row`,
+    );
+    console.log(targets, targetElements);
+    if (targets.length !== targetElements.length) {
+      this.alwaysLoggedError(
+        "Number of targets from flags does not match number of target elements in the message for message ${originalMessage.id}.",
+      );
+      return;
+    }
+  }
 }
 
 Hooks.once("init", () => {
@@ -379,13 +405,6 @@ Hooks.once("socketlib.ready", () => {
   );
 });
 
-// TODO: Add a callback that:
-// 1) Hooks on renderChatMessageHTML conditionally based on whether pf2e-toolbelt is installed and targetHelper is enabled
-// 2) Checks whether the message has targetHelper target row
-// 3) If so, adds friend point reroll buttons to each target row
-// 4) Makes sure each button is only clickable by a user who owns the relevant actor, i.e. checks in the listener for the element that the click comes from a valid user
-// 5) When clicked, triggers the FriendPoints.queryFriendPointFromUser function with the relevant message
-
 Hooks.on("getChatMessageContextOptions", (application, menuItems) => {
   menuItems.push({
     name: "Request Friend Point for Reroll",
@@ -408,4 +427,8 @@ Hooks.on("getChatMessageContextOptions", (application, menuItems) => {
       FriendPoints.queryFriendPointFromUser(moduleSocket, message);
     },
   });
+});
+
+Hooks.on("renderChatMessageHTML", (message, html, context) => {
+  FriendPoints.handleFriendPointRerollWithToolbeltIntegration(message, html);
 });
